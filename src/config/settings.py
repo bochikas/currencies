@@ -105,7 +105,9 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Спецификация API для тестового задания Currencies',
     'VERSION': '1',
-    'SERVERS': [{'url': 'http://0.0.0.0:8888/api/v1', 'description': 'Root url'}]
+    'SERVERS': [{'url': 'http://0.0.0.0:8888/api/v1', 'description': 'Root url'}],
+    'SCHEMA_PATH_PREFIX_TRIM': True,
+    'SERVE_INCLUDE_SCHEMA': False
 }
 
 LANGUAGE_CODE = 'en-us'
