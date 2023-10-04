@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
     'users.apps.UsersConfig',
     'rates.apps.RatesConfig',
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
