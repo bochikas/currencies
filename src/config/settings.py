@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     'users.apps.UsersConfig',
+    'rates.apps.RatesConfig',
 ]
 
 MIDDLEWARE = [
@@ -101,9 +102,9 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'API сервиса для отслеживания динамики курса рубля',
-    'DESCRIPTION': 'Документация API.',
-    'VERSION': '1.0.0',
+    'TITLE': 'Спецификация API для тестового задания Currencies',
+    'VERSION': '1',
+    'SERVERS': [{'url': 'http://0.0.0.0:8888/api/v1', 'description': 'Root url'}]
 }
 
 LANGUAGE_CODE = 'en-us'
