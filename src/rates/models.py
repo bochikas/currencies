@@ -16,3 +16,16 @@ class Rate(models.Model):
         verbose_name = 'курс валют'
         verbose_name_plural = 'курсы валют'
         ordering = ('-date',)
+
+
+class UserCurrency(models.Model):
+    """Отслеживаемые валюты пользователя."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='пользователь', related_name='currencies')
+    currency = models.ForeignKey(Rate, on_delete=models.CASCADE, verbose_name='курс валюты')
+    threshold = models.DecimalField(max_digits=10, decimal_places=4, verbose_name='порог')
+
+    class Meta:
+        verbose_name = 'отслеживаемая валюта'
+        verbose_name_plural = 'отслеживаемые валюты'
+        ordering = ('id',)
