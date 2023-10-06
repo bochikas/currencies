@@ -89,6 +89,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REDIS_LOCATION = f"redis://{os.environ.get('REDIS_HOST')}:{os.environ.get('REDIS_PORT')}/{os.environ.get('REDIS_DB')}"
+
+CACHES = {
+    'default': {
+        "BACKEND": 'django_redis.cache.RedisCache',
+        "LOCATION": REDIS_LOCATION,
+        "OPTIONS": {
+            "CLIENT_CLASS": 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+CELERY_BROKER_URL = REDIS_LOCATION
+CELERY_RESULT_BACKEND = REDIS_LOCATION
+
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication', ),
