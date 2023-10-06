@@ -30,7 +30,7 @@ INSTALLED_APPS = [
 
     'users.apps.UsersConfig',
     'rates.apps.RatesConfig',
-    'api.apps.ApiConfig',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -103,6 +103,7 @@ CACHES = {
 
 CELERY_BROKER_URL = REDIS_LOCATION
 CELERY_RESULT_BACKEND = REDIS_LOCATION
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -132,7 +133,8 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CBR_DAILY_RATES_URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
