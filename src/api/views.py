@@ -76,7 +76,7 @@ class UserCurrencyView(generics.CreateAPIView):
                    responses={201: OpenApiResponse(description='OK'),
                               400: OpenApiResponse(description='Provided data is invalid')})
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer_class()(data=request.data)
+        serializer = self.get_serializer_class()(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         create_user_currency(**serializer.validated_data)
         return response.Response(status=status.HTTP_201_CREATED)
