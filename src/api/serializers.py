@@ -24,14 +24,25 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
 
-class RateSerializer(serializers.ModelSerializer):
-    """Сериализатор курсов валют."""
+class RateSerializerAnonym(serializers.ModelSerializer):
+    """Сериализатор курсов валют анонимного пользователя."""
 
     char_code = serializers.CharField(source='currency.char_code')
 
     class Meta:
         model = Rate
         fields = ('id', 'char_code', 'date', 'value')
+
+
+class RateSerializerAuthenticated(serializers.ModelSerializer):
+    """Сериализатор курсов валют авторизованного пользователя."""
+
+    char_code = serializers.CharField(source='currency.char_code')
+    is_threshold_exceeded = serializers.BooleanField()
+
+    class Meta:
+        model = Rate
+        fields = ('id', 'char_code', 'date', 'value', 'is_threshold_exceeded')
 
 
 class UserCurrencySerializer(serializers.ModelSerializer):
