@@ -1,9 +1,14 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
+from django.db.models import F, Min, Max, Case, When, Value, functions, CharField
+from django.db.models.lookups import Exact, LessThan
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
 from rest_framework import filters, generics, permissions, response, status, views
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from api.filters import RateFilter
 from api.serializers import AnalyticsSerializer, RateSerializer, UserCurrencySerializer, UserSerializer
 from api.services import create_user, create_user_currency
 from rates.models import Rate, UserCurrency
@@ -46,7 +51,7 @@ class RateView(generics.ListAPIView):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):  # для drf-spectacular
             return Rate.objects.none()
-        return Rate.objects.all()
+        return Rate.objects.select_related('currency')
 
     @extend_schema(tags=['Rates'], summary='Получение последних загруженных котировок',
                    parameters=[OpenApiParameter(name='order_by', type=str, enum=['value', '-value'])],
@@ -82,15 +87,11 @@ class UserCurrencyView(generics.CreateAPIView):
         return response.Response(status=status.HTTP_201_CREATED)
 
 
-@extend_schema_view(
-    get=extend_schema(summary='Получение аналитических данных по котируемой валюте за период', tags=['Currency'],
-                      responses={200: OpenApiResponse(description='OK', response=AnalyticsSerializer),
-                                 400: OpenApiResponse(description='Provided data is invalid')}),
-)
 class UserCurrencyAnalyticsView(generics.RetrieveAPIView):
     """Получение аналитических данных по котируемой валюте за период."""
 
     permission_classes = [permissions.IsAuthenticated]
+    filterset_class = RateFilter
 
     def get_serializer_class(self):
         return AnalyticsSerializer
@@ -98,4 +99,49 @@ class UserCurrencyAnalyticsView(generics.RetrieveAPIView):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Rate.objects.none()
-        return Rate.objects.all()
+        return Rate.objects.select_related('currency')
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        min_val, max_val = queryset.aggregate(
+            min_value=Min('value'),
+            max_value=Max('value')
+        ).values()
+
+        queryset = queryset.annotate(
+            is_max_value=Exact(F('value'), max_val),
+            is_min_value=Exact(F('value'), min_val),
+        )
+
+        query_threshold = self.request.query_params.get('threshold')
+        if query_threshold:
+            threshold = Decimal(query_threshold)
+            queryset = queryset.annotate(
+                is_threshold_exceeded=LessThan(F('value'), threshold),
+                percentage_ratio=functions.Concat(
+                    functions.Round(100 * threshold / F('value'), precision=2), Value('%'), output_field=CharField()
+                ),
+                threshold_match_type=Case(
+                    When(value__gt=threshold, then=Value('Котировка меньше ПЗ')),
+                    When(value__lt=threshold, then=Value('Котировка превысила ПЗ')),
+                    default=Value('Котировка равна ПЗ'),
+                )
+            )
+        else:
+            queryset = queryset.annotate(
+                threshold_match_type=Value('Значение не указано'),
+                is_threshold_exceeded=Value(None),
+                percentage_ratio=Value('%'),
+            )
+
+        return queryset
+
+    @extend_schema(tags=['Currency'], filters=True,
+                   summary='Получение аналитических данных по котируемой валюте за период',
+                   responses={200: OpenApiResponse(description='OK', response=AnalyticsSerializer),
+                              400: OpenApiResponse(description='Provided data is invalid')})
+    def get(self, request, id=None):
+        rates = self.filter_queryset(self.get_queryset().filter(currency_id=id))
+        serializer = self.get_serializer_class()(rates, many=True)
+        return response.Response(serializer.data)

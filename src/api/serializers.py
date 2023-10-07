@@ -27,6 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
 class RateSerializer(serializers.ModelSerializer):
     """Сериализатор курсов валют."""
 
+    char_code = serializers.CharField(source='currency.char_code')
+
     class Meta:
         model = Rate
         fields = ('id', 'char_code', 'date', 'value')
@@ -45,11 +47,12 @@ class UserCurrencySerializer(serializers.ModelSerializer):
 class AnalyticsSerializer(serializers.ModelSerializer):
     """Сериализатор аналитики по валюте."""
 
+    char_code = serializers.CharField(source='currency.char_code')
     is_threshold_exceeded = serializers.BooleanField()
     threshold_match_type = serializers.CharField()
     is_min_value = serializers.BooleanField()
     is_max_value = serializers.BooleanField()
-    percentage_ratio = serializers.DecimalField(max_digits=10, decimal_places=2)
+    percentage_ratio = serializers.CharField()
 
     class Meta:
         model = Rate
