@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.db.models import F, Min, Max, Case, When, Value, functions, CharField
+from django.db.models import F, Min, Max, Case, When, Value, functions, CharField, Window
 from django.db.models.lookups import Exact, LessThan
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
@@ -56,11 +56,12 @@ class RateView(generics.ListAPIView):
         if getattr(self, 'swagger_fake_view', False):  # для drf-spectacular
             return Rate.objects.none()
 
-        qs = Rate.objects.select_related('currency')
-        last_rate = Rate.objects.latest('date')
-
-        if last_rate:
-            qs = qs.filter(date=last_rate.date)
+        qs = Rate.objects.select_related('currency').annotate(
+            latest_date=Window(
+                expression=functions.FirstValue('date'),
+                order_by=F('date').desc()
+                )
+        ).filter(date=F('latest_date'))
 
         if not self.request.user.is_authenticated:
             return qs
