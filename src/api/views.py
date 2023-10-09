@@ -69,7 +69,7 @@ class RateView(generics.ListAPIView):
             is_threshold_exceeded=LessThan(F('currency__usercurrency__threshold'), F('value')),
         )
 
-    @method_decorator(cache_per_user(60*60*12))
+    @method_decorator(cache_per_user(60*60))
     @extend_schema(tags=['Rates'], summary='Получение последних загруженных котировок',
                    parameters=[OpenApiParameter(name='order_by', type=str, enum=['value', '-value'])],
                    responses={200: OpenApiResponse(response=api_serializers.RateSerializerAnonym(many=True),
