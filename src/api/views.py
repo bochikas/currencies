@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.db.models import F, Min, Max, Case, When, Value, functions, CharField
 from django.db.models.lookups import Exact, LessThan
+from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
 from rest_framework import filters, generics, permissions, response, status, views
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -11,6 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from api import serializers as api_serializers
 from api.filters import RateFilter
 from api.services import create_user, create_user_currency
+from api.utils import cache_per_user
 from rates.models import Rate, UserCurrency
 
 User = get_user_model()
@@ -62,9 +64,10 @@ class RateView(generics.ListAPIView):
             is_threshold_exceeded=LessThan(F('currency__usercurrency__threshold'), F('value')),
         )
 
+    @method_decorator(cache_per_user(60*60*12))
     @extend_schema(tags=['Rates'], summary='Получение последних загруженных котировок',
                    parameters=[OpenApiParameter(name='order_by', type=str, enum=['value', '-value'])],
-                   responses={201: OpenApiResponse(response=api_serializers.RateSerializerAnonym(many=True),
+                   responses={200: OpenApiResponse(response=api_serializers.RateSerializerAnonym(many=True),
                                                    description='OK'),
                               400: OpenApiResponse(description='Provided data is invalid')})
     def get(self, request):

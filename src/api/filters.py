@@ -4,7 +4,7 @@ from rates.models import Rate
 
 
 class RateFilter(filters.FilterSet):
-    """Фильтр обзоров."""
+    """Фильтр для курсов валют."""
 
     threshold = filters.NumberFilter(method='filter_threshold')
     date_from = filters.DateFilter(method='filter_date_from')
