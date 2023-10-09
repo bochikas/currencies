@@ -18,7 +18,15 @@ celery = "^5.3.4"
 django-redis = "^5.4.0"
 requests = "^2.31.0"
 
+[tool.poetry.group.dev.dependencies]
+pytest-django = "^4.5.2"
+flake8 = "^6.1.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py"]
+filterwarnings = ["ignore::DeprecationWarning"]

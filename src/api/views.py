@@ -20,7 +20,7 @@ User = get_user_model()
 
 @extend_schema_view(
     post=extend_schema(summary='Получение токена аутентификации по email и password', tags=['Users'],
-                       responses={201: OpenApiResponse(description='OK', response=TokenObtainPairSerializer),
+                       responses={200: OpenApiResponse(description='OK', response=TokenObtainPairSerializer),
                                   400: OpenApiResponse(description='Provided data is invalid')}),
 )
 class LoginView(TokenObtainPairView):
@@ -56,8 +56,12 @@ class RateView(generics.ListAPIView):
         if getattr(self, 'swagger_fake_view', False):  # для drf-spectacular
             return Rate.objects.none()
 
-        max_date = Rate.objects.latest('date').date
-        qs = Rate.objects.filter(date=max_date).select_related('currency')
+        qs = Rate.objects.select_related('currency')
+        last_rate = Rate.objects.latest('date')
+
+        if last_rate:
+            qs = qs.filter(date=last_rate.date)
+
         if not self.request.user.is_authenticated:
             return qs
         return qs.filter(currency__usercurrency__user=self.request.user).annotate(
